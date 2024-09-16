@@ -4,12 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chat PDF</title>
-    <link rel="stylesheet" href="static/css/style.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   </head>
   <body>
+    {% if 'username' in session %}
+        <div class="username-display">{{ session['username'] }}</div>
+        <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+    {% endif %}
     <div class="container">
       <div class="header">
-        <h1 class="main-heading">Chat with PDF</h1>
+        <h1 class="main-heading">PDF Explorer Assistant</h1>
         <div id="alertMessage" class="alert-message"></div>
       </div>
       <div class="row">
@@ -63,6 +67,9 @@
         </div>
       </div>
     </div>
-    <script src="static/js/script.js"></script>
+    {% if 'username' in session %}
+      <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+    {% endif %}
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
   </body>
 </html>
