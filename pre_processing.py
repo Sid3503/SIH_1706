@@ -46,7 +46,10 @@ def load_vector_store():
 def get_conversational_chain():
     """Initialize the conversational chain using Google Generative AI."""
     prompt_template = """
-    Based on the following context items from the organizational document, please provide a comprehensive summary...
+    Based on the following context items from the organizational document, please provide a comprehensive summary of the answer related to context...
+    The user question can be anything like a word related or in the pdf, be robust to extract relevant answers according to given word or words.
+    Sometimes the user would just give some word or 2-3 words as question.
+    So extract answers from context according to those words.
     {context}
     User query: {question}
     Answer:
