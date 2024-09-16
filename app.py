@@ -1,5 +1,5 @@
 # app.py
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from pre_processing import get_pdf_text, get_text_chunks, summarize_data, user_input, fetch_org_info_from_genai
 import os
 from werkzeug.utils import secure_filename
@@ -16,13 +16,69 @@ from langchain_community.embeddings import HuggingFaceInstructEmbeddings
 from langchain_community.llms import HuggingFaceHub
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
+from flask_mail import Mail, Message
+import random
+from db import employees
+
 
 app = Flask(__name__)
+app.secret_key = 'aa8104f270d2ba3bcf463e1e5a10ae64'  # Change this to a secure key
+
+
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT'))
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS') == 'True'
+app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL') == 'True'
+
+mail = Mail(app)
+
+def generate_otp():
+    return random.randint(100000, 999999)
+
+def send_otp_email(recipient_email, otp_code):
+    msg = Message('Your OTP Code',
+                  sender=os.getenv('MAIL_USERNAME'),  
+                  recipients=[recipient_email])
+    msg.body = f'Your OTP code is: {otp_code}'
+    mail.send(msg)
+
 
 # Home route
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if username in employees and employees[username]['password'] == password:
+            session['username'] = username
+            session['otp'] = generate_otp()
+            send_otp_email(employees[username]['email'], session['otp'])
+            return redirect(url_for('verify_otp')) 
+        else:
+            flash('Invalid credentials')
+    return render_template('login.html')
+
+
+
+@app.route('/verify', methods=['GET', 'POST'])
+def verify_otp():
+    if request.method == 'POST':
+        entered_otp = request.form['otp']
+        if entered_otp == str(session['otp']):
+            return redirect(url_for('index'))
+        else:
+            flash('Invalid OTP')
+    return render_template('verify.html')
+
+
+@app.route('/index')
 def index():
+    if 'username' not in session:
+        return redirect(url_for('login'))
     return render_template('index.html')
+
 
 @app.route('/process_pdf', methods=['POST'])
 def process_pdf():
@@ -107,6 +163,13 @@ def fetch_org_info():
         os.remove(filepath)
         
         return jsonify({'orgInfo': org_info}), 200
+
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    session.pop('otp', None)
+    return redirect(url_for('login'))
 
 
 
