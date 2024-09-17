@@ -7,13 +7,28 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div class="container">
+    <div class="container container-wide">
         <h2>Verify OTP</h2>
+        <div id="flash-message" class="flash-message hide">OTP Sent Successfully!</div>
         <form method="POST" action="/verify">
             <label for="otp">Enter OTP:</label><br>
             <input type="text" id="otp" name="otp" required><br><br>
             <button type="submit">Verify OTP</button>
         </form>
     </div>
+
+    <script>
+        // Show flash message for 3 seconds
+        window.onload = function() {
+            const flashMessage = document.getElementById('flash-message');
+            flashMessage.classList.remove('hide');
+            flashMessage.classList.add('show');
+
+            setTimeout(() => {
+                flashMessage.classList.remove('show');
+                flashMessage.classList.add('hide');
+            }, 3000); // Hide after 3 seconds
+        };
+    </script>
 </body>
 </html>
